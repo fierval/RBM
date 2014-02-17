@@ -5,6 +5,8 @@ VisualStudioVersion = 12.0.30110.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FRBM", "FRBM\FRBM.fsproj", "{BE447494-884F-4D52-8615-DC749A7F6953}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Utils", "Utils\Utils.fsproj", "{5AB6BA20-F8D3-4743-B0C6-F90F4732B13A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{BE447494-884F-4D52-8615-DC749A7F6953}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BE447494-884F-4D52-8615-DC749A7F6953}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BE447494-884F-4D52-8615-DC749A7F6953}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5AB6BA20-F8D3-4743-B0C6-F90F4732B13A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5AB6BA20-F8D3-4743-B0C6-F90F4732B13A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5AB6BA20-F8D3-4743-B0C6-F90F4732B13A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5AB6BA20-F8D3-4743-B0C6-F90F4732B13A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

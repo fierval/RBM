@@ -33,6 +33,10 @@
     <DocumentationFile>bin\Release\FRBM.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Fmat.Numerics">
+      <HintPath>..\packages\Fmat.1.0.0\lib\Fmat.Numerics.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="MathNet.Numerics">
       <HintPath>..\packages\MathNet.Numerics.2.6.2\lib\net40\MathNet.Numerics.dll</HintPath>
       <Private>True</Private>
@@ -64,6 +68,8 @@
     <None Include="Samples\MathNet.Numerics.FSharp\LinearRegression.fsx" />
     <None Include="Samples\MathNet.Numerics.FSharp\Histogram.fsx" />
     <None Include="Samples\MathNet.Numerics.FSharp\Apply.fsx" />
+    <None Include="QuickStart.fsx" />
+    <None Include="FmatDoc.chm" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
