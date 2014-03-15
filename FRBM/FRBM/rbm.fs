@@ -73,9 +73,9 @@ module RBM =
 
                 // Go up again
                 // Not setting to "0" or "1", since nothing depends on them anymore
-                let hidden' = probabHiddenGivenVisible visible' //no need to transpose visible here.
+                let probabHidden' = probabHiddenGivenVisible visible' //no need to transpose visible here.
 
-                let deltaWeights = (hidden * visible.T - hidden' * visible'.T) / float (finish - i + 1)
+                let deltaWeights = (probabHidden * visible.T - probabHidden' * visible'.T) / float (finish - i + 1)
                 weights <- weights + alpha * deltaWeights
   
                 // persist the computed visible
