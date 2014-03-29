@@ -37,17 +37,23 @@ module RBM =
         let sigm (x : Matrix) = 1.0 / (1.0 + exp(-x))
 
         // weight matrix W[j,k]: j - hidden, k - visible (# of units)
-        let mutable weights = Matrix.normalRnd(0.0, 1.0, [nVisible; nHidden])
+        let mutable weights = Matrix.normalRnd(0.0, 1.0, [nHidden; nVisible])
+        
+        // biases
+        // Since all our computations are done in batches, biases get to be matrices of column vectors
+        let mutable hiddenBiases = repmat(Matrix.normalRnd(0.0, 1.0, [nHidden; 1]), [1; batchSize])
+        let mutable visibleBiases = repmat(Matrix.normalRnd(0.0, 1.0, [nVisible; 1]), [1; batchSize])
+
         let mutable prevWeights = zeros [nVisible; nHidden]
 
-        let probabMatrix (weights : Matrix) (units : Matrix) =
-            sigm weights * units
+        let probabMatrix (bias : Matrix) (weights : Matrix) (units : Matrix) =
+            sigm (bias + weights * units)
         
         // vector of probabilities for each hidden neuron j p(h[j] = 1 | x)
-        let probabHiddenGivenVisible = probabMatrix weights
+        let probabHiddenGivenVisible = probabMatrix visibleBiases weights
 
         // vector of probabilites for each visible neuron k p(x[k] = 1 | h)
-        let probabVisibleGivenHidden = probabMatrix weights.T
+        let probabVisibleGivenHidden = probabMatrix hiddenBiases weights.T
 
         // perform Gibbs sampling for the number of steps,
         // starting with the 
@@ -69,15 +75,24 @@ module RBM =
                 // It's ok to keep probabilities and not set values to "0" and "1" for this layer
                 // (Hinton, section 3.2). Since, however, persistent version of CD is used, this may
                 // make a difference (?)
-                let visible' = probabVisibleGivenHidden hidden |> stochasticBinarize
+                let visible' = probabVisibleGivenHidden hidden
 
                 // Go up again
                 // Not setting to "0" or "1", since nothing depends on them anymore
-                let probabHidden' = probabHiddenGivenVisible visible' //no need to transpose visible here.
+                let hidden' = probabHiddenGivenVisible visible' //no need to transpose visible here.
 
-                let deltaWeights = (probabHidden * visible.T - probabHidden' * visible'.T) / float (finish - i + 1)
+                let total = float (finish - i + 1)
+                
+                let deltaWeights = (hidden * visible.T - hidden' * visible'.T) / total
+                
+                // bias update is tricky: average all the updated biases over the batch & replicate
+                let deltaHidden = repmat(Matrix.sum((hidden - hidden'), 1) / total, [1; batchSize])
+                let deltaVisible = repmat(Matrix.sum((visible - visible'), 1) / total, [1; batchSize])
+
                 weights <- weights + alpha * deltaWeights
-  
+                hiddenBiases <- hiddenBiases + deltaHidden
+                visibleBiases <- visibleBiases + deltaVisible
+
                 // persist the computed visible
                 curData.[0..nVisible - 1, i..finish] <- visible'
 
@@ -85,7 +100,7 @@ module RBM =
         /// error is the square sum of differences between
         /// last epoch weights and current weights
         let computeError () =
-            let errorMatrix = weights - prevWeights
+            let errorMatrix = origData - curData
             
             errorMatrix.ApplyFun(fun e -> e * e)
             Matrix.sum(Matrix.sum(errorMatrix, 0), 1).[0]
