@@ -27,10 +27,11 @@ module NeuralNetsModule =
         let lambda = defaultArg lambda 0.0
         let error = defaultArg error 0.05
         // learing rate
-        let gamma = 0.02
-
+        let eta = 0.02
         let nVisible = if data = Unchecked.defaultof<float [,]> || data.Length = 0 then failwith "0 visible units" else Array2D.length2 data
+
         let totalSamples = Array2D.length1 data
+        let regularize = 1.0 - lambda / (float totalSamples) * 2.0 * eta
     
         let hiddenLengths = hiddenLengths |> Seq.toList
 
@@ -84,7 +85,7 @@ module NeuralNetsModule =
                             let sq = Matrix.applyFun(weight, fun w -> w * w)
                             yield (sum(sum(sq, 0), 1)).[0,0]
                     ]
-                lambda * (1.0 / float totalSamples) * squares.Sum() + error
+                lambda / float totalSamples * squares.Sum() + error
             else
                 error
 
@@ -130,8 +131,8 @@ module NeuralNetsModule =
 
             // compute deltas of weights and adjust the weights
             for i = weights.Length - 1 to 0 do
-                let deltaW = (-gamma * deltas.[i] * layers.[i]).T
-                weights.[i] <- weights.[i] + deltaW
+                let deltaW = (-eta * deltas.[i] * layers.[i]).T
+                weights.[i] <- weights.[i] * regularize + deltaW
                         
 
 
