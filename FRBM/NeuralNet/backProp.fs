@@ -29,6 +29,7 @@ module NeuralNetsModule =
         // learing rate
         let eta = 0.02
         let nVisible = if data = Unchecked.defaultof<float [,]> || data.Length = 0 then failwith "0 visible units" else Array2D.length2 data
+        let nResult = (Array2D.length2 labels)
 
         let totalSamples = Array2D.length1 data
         let regularize = 1.0 - lambda / (float totalSamples) * 2.0 * eta
@@ -68,22 +69,38 @@ module NeuralNetsModule =
             |]
 
         // sigmoid activation
-        let activation (x : Matrix) = 1.0 / (1.0 + exp(-x))
-        let activation' (x : Matrix) = 
-            let y = activation x
-            y * (1.0 - y)
+        let activation (x : Matrix) = 
+            if not (x.IsVector) then failwith "activation applies to vectors only"
+            1.0 / (1.0 + exp(-x))
 
-        // given the result vector t, compute squared error = 1/2 * Sum(t[i] - y[i])
-        let squareError (t : Matrix) =
-            let diffOutResult = t - layers.[outLayerIndex]
-            let error = 0.5 * (diffOutResult.T * diffOutResult)
+        let activation' (x : Matrix) = 
+            if not (x.IsVector) then failwith "activation applies to vectors only"
+            let y = activation x
+            y .* (1.0 - y)
+
+        let softmax (z : Matrix) =
+            if not z.IsVector then failwith "softmax applies to vectors only"
+            let exps = exp z
+            let sumexps = exps.ToColMajorSeq().Sum()
+            exps / sumexps
+
+        // given the result vector t, compute squared error = 1/2 * Sum(t[i] - y[i])^2
+        let squareError () =
+            let diffOutResult = output - layers.[outLayerIndex]
+            let errors = 
+                [
+                    for i = 0 to totalSamples - 1 do
+                        yield (0.5 * (diffOutResult.[i..i, 0..nResult - 1].T * diffOutResult.[i..i, 0..nResult - 1])).[0,0]
+                ]
+            let error = errors.Sum() / float totalSamples
+
             // regularization contribution
             if lambda > 0.0 then
                 let squares = 
                     [
                         for weight in weights do
                             let sq = Matrix.applyFun(weight, fun w -> w * w)
-                            yield (sum(sum(sq, 0), 1)).[0,0]
+                            yield sq.ToColMajorSeq().Sum()
                     ]
                 lambda / float totalSamples * squares.Sum() + error
             else
@@ -134,5 +151,28 @@ module NeuralNetsModule =
                 let deltaW = (-eta * deltas.[i] * layers.[i]).T
                 weights.[i] <- weights.[i] * regularize + deltaW
                         
+        member this.Train epochs =
+            
+            let rec train curEpoch curError =
+                if curEpoch = 0 || curError <= error then ()
+                else
+                    Console.WriteLine("Epoch: {0}, error: {1}", epochs - curEpoch, curError)
+                    for j = 0 to totalSamples do
+                        forwardProp j
+                        backProp j
+                train (curEpoch - 1) (squareError())
+            
+            train epochs Double.MaxValue
 
+        member this.Predict (data : float []) =
+            let data = Matrix([yield! data; yield 1.0])
+            layers.[0] <- data
+            // just apply forward propagation: we have set the input layer to be the vector
+            // we want prediction for
+            forwardProp 0
+            let res = softmax outLayer
+            let maxelem = res.ToColMajorSeq().Max()
+            let index = ref -1
+            res.ToColMajorSeq() |> Seq.iteri (fun i e -> if e = maxelem then index := i)
+            Array.init nResult (fun i -> if i = !index then 1.0 else 0.0)            
 
